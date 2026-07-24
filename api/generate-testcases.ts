@@ -106,7 +106,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? files.screenshot[0]
       : files.screenshot;
 
-    let requirementText = Array.isArray(fields.requirementText)
+    const requirementText = Array.isArray(fields.requirementText)
       ? fields.requirementText[0]
       : fields.requirementText;
     const additionalNotes = Array.isArray(fields.additionalNotes)
@@ -115,7 +115,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!screenshotFile && !requirementText?.trim()) {
       return res.status(400).json({
-        error: 'Please provide a requirement screenshot, document, or text description.',
+        error: 'Please provide a requirement screenshot or text description.',
       });
     }
 
@@ -128,62 +128,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let hasImage = false;
 
     if (screenshotFile && screenshotFile.filepath) {
-      const isImage = screenshotFile.mimetype?.startsWith('image/');
+      const fileBuffer = fs.readFileSync(screenshotFile.filepath);
+      const base64 = fileBuffer.toString('base64');
+      const mimeType = screenshotFile.mimetype || 'image/png';
 
-      if (isImage) {
-        const fileBuffer = fs.readFileSync(screenshotFile.filepath);
-        const base64 = fileBuffer.toString('base64');
-        const mimeType = screenshotFile.mimetype || 'image/png';
-
-        userContent.push({
-          type: 'image_url',
-          image_url: { url: `data:${mimeType};base64,${base64}` },
-        });
-        userContent.push({
-          type: 'text',
-          text: 'Analyze the above requirement screenshot and generate test cases.',
-        });
-        hasImage = true;
-      } else {
-        // Document text extraction
-        const fileBuffer = fs.readFileSync(screenshotFile.filepath);
-        let extractedText = '';
-
-        if (screenshotFile.mimetype === 'application/pdf' || screenshotFile.originalFilename?.endsWith('.pdf')) {
-          try {
-            const pdf = (await import('pdf-parse')).default;
-            const pdfData = await pdf(fileBuffer);
-            extractedText = pdfData.text;
-          } catch (pdfErr) {
-            console.error('PDF extraction error:', pdfErr);
-            return res.status(500).json({ error: 'Failed to parse text from PDF file.' });
-          }
-        } else if (
-          screenshotFile.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-          screenshotFile.originalFilename?.endsWith('.docx')
-        ) {
-          try {
-            const mammoth = await import('mammoth');
-            const docxResult = await mammoth.extractRawText({ buffer: fileBuffer });
-            extractedText = docxResult.value;
-          } catch (docxErr) {
-            console.error('DOCX extraction error:', docxErr);
-            return res.status(500).json({ error: 'Failed to parse text from Word Document (.docx).' });
-          }
-        } else if (screenshotFile.originalFilename?.endsWith('.doc')) {
-          return res.status(400).json({
-            error: 'Old Word Document format (.doc) is not supported. Please convert it to .docx or PDF first.',
-          });
-        } else {
-          return res.status(400).json({ error: 'Unsupported document format uploaded.' });
-        }
-
-        if (!extractedText.trim()) {
-          return res.status(400).json({ error: 'The uploaded document appears to have no readable text.' });
-        }
-
-        requirementText = `${requirementText ? requirementText + '\n\n' : ''}--- Requirements from Document (${screenshotFile.originalFilename}) ---\n${extractedText}`;
-      }
+      userContent.push({
+        type: 'image_url',
+        image_url: { url: `data:${mimeType};base64,${base64}` },
+      });
+      userContent.push({
+        type: 'text',
+        text: 'Analyze the above requirement screenshot and generate test cases.',
+      });
+      hasImage = true;
     }
 
     if (requirementText?.trim()) {
