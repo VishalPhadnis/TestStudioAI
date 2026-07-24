@@ -5,14 +5,16 @@ export function renderDropZone(
 
   container.innerHTML = `
     <div class="drop-zone" id="drop-zone">
-      <input type="file" class="drop-zone__input" id="drop-zone-input" accept=".png,.jpg,.jpeg,.webp" />
+      <input type="file" class="drop-zone__input" id="drop-zone-input" accept=".png,.jpg,.jpeg,.webp,.pdf,.doc,.docx" />
       <svg class="drop-zone__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-        <polyline points="21 15 16 10 5 21"></polyline>
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <polyline points="10 9 9 9 8 9"></polyline>
       </svg>
-      <p class="drop-zone__text">Drag & Drop Screenshot of Requirement</p>
-      <p class="drop-zone__hint">or click to browse • PNG, JPG, WebP up to 10MB</p>
+      <p class="drop-zone__text">Drag & Drop Screenshot or Document (PDF, Word)</p>
+      <p class="drop-zone__hint">or click to browse • PNG, JPG, WebP, PDF, DOC, DOCX up to 10MB</p>
     </div>
   `;
 
@@ -47,8 +49,12 @@ export function renderDropZone(
     e.preventDefault();
     dropZone.classList.remove('drop-zone--active');
     const file = e.dataTransfer?.files[0] || null;
-    if (file && file.type.startsWith('image/')) {
-      showPreview(file, onFileSelected);
+    if (file) {
+      const allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.pdf', '.doc', '.docx'];
+      const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      if (allowedExtensions.includes(fileExtension) || file.type.startsWith('image/') || file.type === 'application/pdf') {
+        showPreview(file, onFileSelected);
+      }
     }
   });
 }
@@ -56,15 +62,23 @@ export function renderDropZone(
 function showPreview(file: File, onFileSelected: (file: File | null) => void): void {
   const dropZone = document.getElementById('drop-zone')!;
   const fileSize = formatFileSize(file.size);
+  const isImage = file.type.startsWith('image/');
 
-  // Create image preview
-  const reader = new FileReader();
-  reader.onload = (e) => {
+  const updateUI = (previewSrc: string) => {
     dropZone.classList.add('drop-zone--has-file');
+    const previewEl = isImage 
+      ? `<img src="${previewSrc}" alt="Screenshot preview" class="drop-zone__preview-img" />`
+      : `<div class="drop-zone__preview-img" style="display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.1);color:var(--color-accent)">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+         </div>`;
+
     dropZone.innerHTML = `
-      <input type="file" class="drop-zone__input" id="drop-zone-input" accept=".png,.jpg,.jpeg,.webp" />
+      <input type="file" class="drop-zone__input" id="drop-zone-input" accept=".png,.jpg,.jpeg,.webp,.pdf,.doc,.docx" />
       <div class="drop-zone__preview">
-        <img src="${e.target?.result}" alt="Screenshot preview" class="drop-zone__preview-img" />
+        ${previewEl}
         <div class="drop-zone__preview-info">
           <p class="drop-zone__preview-name">${file.name}</p>
           <p class="drop-zone__preview-size">${fileSize}</p>
@@ -92,14 +106,21 @@ function showPreview(file: File, onFileSelected: (file: File | null) => void): v
 
     onFileSelected(file);
   };
-  reader.readAsDataURL(file);
+
+  if (isImage) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      updateUI(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  } else {
+    updateUI('');
+  }
 }
 
 function resetDropZone(onFileSelected: (file: File | null) => void): void {
   const container = document.getElementById('drop-zone-container')!;
   renderDropZone(onFileSelected);
-  // Re-grab to ensure fresh DOM
-  container.querySelector('.drop-zone');
 }
 
 function formatFileSize(bytes: number): string {
