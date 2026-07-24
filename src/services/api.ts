@@ -3,6 +3,15 @@ import type { GenerateResponse, SettingsResponse } from '../types/index.js';
 const API_BASE = '/api';
 
 export async function loadSettings(): Promise<SettingsResponse> {
+  // Check localStorage first for stateless/Vercel support
+  const localKey = localStorage.getItem('groq_api_key') || '';
+  if (localKey) {
+    return {
+      groqApiKey: localKey.substring(0, 4) + '••••••••' + localKey.substring(localKey.length - 4),
+      hasApiKey: true,
+    };
+  }
+
   const res = await fetch(`${API_BASE}/settings`);
   if (!res.ok) {
     throw new Error('Failed to load settings');
@@ -11,10 +20,13 @@ export async function loadSettings(): Promise<SettingsResponse> {
 }
 
 export async function saveSettings(groqApiKey: string): Promise<SettingsResponse> {
+  const trimmed = groqApiKey.trim();
+  localStorage.setItem('groq_api_key', trimmed);
+
   const res = await fetch(`${API_BASE}/settings`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ groqApiKey }),
+    body: JSON.stringify({ groqApiKey: trimmed }),
   });
   const data = await res.json();
   if (!res.ok) {
@@ -42,8 +54,15 @@ export async function generateTestCases(
     formData.append('additionalNotes', additionalNotes.trim());
   }
 
+  const headers: Record<string, string> = {};
+  const localKey = localStorage.getItem('groq_api_key');
+  if (localKey) {
+    headers['x-groq-api-key'] = localKey;
+  }
+
   const res = await fetch(`${API_BASE}/generate-testcases`, {
     method: 'POST',
+    headers,
     body: formData,
   });
 

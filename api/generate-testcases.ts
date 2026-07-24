@@ -88,7 +88,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiKey = process.env.GROQ_API_KEY || '';
+  const apiKey = (req.headers['x-groq-api-key'] as string) || process.env.GROQ_API_KEY || '';
   if (!apiKey) {
     return res.status(400).json({
       error: 'Groq API key not configured. Please set GROQ_API_KEY in Vercel Environment Variables or use Settings.',

@@ -55,15 +55,17 @@ export async function generateTestCases(
   imageBase64?: string,
   imageMimeType?: string,
   requirementText?: string,
-  additionalNotes?: string
+  additionalNotes?: string,
+  apiKeyOverride?: string
 ): Promise<TestCase[]> {
   const settings = loadSettings();
+  const apiKey = apiKeyOverride || settings.groqApiKey || process.env.GROQ_API_KEY;
 
-  if (!settings.groqApiKey) {
+  if (!apiKey) {
     throw new Error('Groq API key not configured. Please set it in Settings.');
   }
 
-  const groq = new Groq({ apiKey: settings.groqApiKey });
+  const groq = new Groq({ apiKey });
 
   // Build the user message content
   const userContent: Array<

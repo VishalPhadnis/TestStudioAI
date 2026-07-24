@@ -87,11 +87,14 @@ router.post('/', upload.single('screenshot'), async (req: Request, res: Response
       }
     }
 
+    const apiKeyHeader = req.headers['x-groq-api-key'] as string | undefined;
+
     const testCases = await generateTestCases(
       imageBase64,
       imageMimeType,
       requirementText?.trim(),
-      additionalNotes?.trim()
+      additionalNotes?.trim(),
+      apiKeyHeader
     );
 
     res.json({ testCases });
