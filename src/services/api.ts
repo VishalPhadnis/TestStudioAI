@@ -54,15 +54,13 @@ export async function generateTestCases(
     formData.append('additionalNotes', additionalNotes.trim());
   }
 
-  const headers: Record<string, string> = {};
   const localKey = localStorage.getItem('groq_api_key');
   if (localKey) {
-    headers['x-groq-api-key'] = localKey;
+    formData.append('groqApiKey', localKey);
   }
 
   const res = await fetch(`${API_BASE}/generate-testcases`, {
     method: 'POST',
-    headers,
     body: formData,
   });
 
