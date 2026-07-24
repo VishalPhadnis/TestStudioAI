@@ -1,0 +1,34 @@
+{
+  "name": "test-case-generator-app",
+  "version": "1.0.0",
+  "description": "AI-powered test case generator using Groq Llama Scout",
+  "type": "module",
+  "scripts": {
+    "dev:frontend": "vite",
+    "dev:backend": "tsx watch server/index.ts",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:frontend": "vite build",
+    "build:backend": "tsc -p server/tsconfig.json",
+    "build": "npm run build:frontend && npm run build:backend",
+    "start": "node dist/server/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "formidable": "^3.5.1",
+    "groq-sdk": "^0.8.0",
+    "multer": "^1.4.5-lts.1",
+    "papaparse": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.0.0",
+    "@types/papaparse": "^5.3.15",
+    "concurrently": "^9.0.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vite": "^5.4.0"
+  }
+}

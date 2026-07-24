@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm run build:frontend",
+  "outputDirectory": "dist/frontend",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/api/settings", "destination": "/api/settings" },
+    { "source": "/api/generate-testcases", "destination": "/api/generate-testcases" },
+    { "source": "/api/health", "destination": "/api/health" }
+  ]
+}
