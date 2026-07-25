@@ -128,9 +128,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let hasImage = false;
 
     if (screenshotFile && screenshotFile.filepath) {
+      const mimeType = screenshotFile.mimetype || '';
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+      if (!allowedTypes.includes(mimeType)) {
+        return res.status(400).json({
+          error: 'Only PNG, JPG, and WebP images are allowed',
+        });
+      }
+
       const fileBuffer = fs.readFileSync(screenshotFile.filepath);
       const base64 = fileBuffer.toString('base64');
-      const mimeType = screenshotFile.mimetype || 'image/png';
 
       userContent.push({
         type: 'image_url',
