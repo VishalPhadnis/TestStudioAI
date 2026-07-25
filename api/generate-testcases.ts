@@ -181,7 +181,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ],
           model,
           temperature: 0.3,
-          max_completion_tokens: 4096,
+          max_tokens: 4096,
         });
         console.log(`✅ Success with model: ${model}`);
         break;
